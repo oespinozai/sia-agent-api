@@ -129,15 +129,14 @@
           }
         ],
         "x-payment-info": {
-          "offers": [
-            {
-              "intent": "charge",
-              "method": "x402",
-              "amount": "50000",
-              "currency": "USDC",
-              "description": "One regulatory change-feed call."
-            }
-          ]
+          "protocols": [
+            "x402"
+          ],
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.05"
+          }
         }
       }
     },
