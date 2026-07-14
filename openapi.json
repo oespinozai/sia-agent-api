@@ -1,0 +1,214 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Alvento SIA Regulatory Change Feed API",
+    "description": "UK private-security (SIA) regulatory change feed derived from official GOV.UK guidance, for AI agents.",
+    "version": "1.0.0",
+    "contact": {
+      "email": "compliance@alvento.uk"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://sia.alvento.uk"
+    }
+  ],
+  "x-service-info": {
+    "categories": [
+      "compliance",
+      "legal",
+      "regulatory"
+    ],
+    "docs": {
+      "homepage": "https://compliance.alvento.uk",
+      "apiReference": "https://compliance.alvento.uk/docs",
+      "llms": "https://sia.alvento.uk/llms.txt"
+    }
+  },
+  "paths": {
+    "/v1/changes": {
+      "get": {
+        "operationId": "getSiaRegulatoryChanges",
+        "summary": "Get detected changes to UK private-security regulatory guidance",
+        "description": "Full change history: detected changes to UK GOV.UK and SIA private-security guidance pages since a given date, each with source, detection time, page-updated date, summary and tags.",
+        "tags": [
+          "compliance",
+          "sia",
+          "change-feed"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "changes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "tier": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required. Provide an API key (Authorization: Bearer <key>) or pay via x402.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "payment_required"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "x402": {
+                      "type": "object",
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "scheme": {
+                          "type": "string",
+                          "example": "exact"
+                        },
+                        "network": {
+                          "type": "string",
+                          "example": "base"
+                        },
+                        "asset": {
+                          "type": "string",
+                          "example": "USDC"
+                        },
+                        "amount": {
+                          "type": "string"
+                        },
+                        "pay_to": {
+                          "type": "string",
+                          "description": "Base network USDC receive address."
+                        }
+                      }
+                    },
+                    "docs": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ISO-8601 date; return changes detected on or after this date."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Maximum rows to return (default 100, max 500)."
+          }
+        ],
+        "x-payment-info": {
+          "offers": [
+            {
+              "intent": "charge",
+              "method": "x402",
+              "amount": "50000",
+              "currency": "USDC",
+              "description": "One regulatory change-feed call."
+            }
+          ]
+        }
+      }
+    },
+    "/v1/sources": {
+      "get": {
+        "operationId": "getSiaMonitoredSources",
+        "summary": "List the UK GOV.UK and SIA guidance pages monitored for changes",
+        "description": "The set of official GOV.UK and SIA private-security guidance pages this feed monitors, with the last detected change time for each.",
+        "tags": [
+          "compliance",
+          "sia",
+          "reference"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sources": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/v1/latest": {
+      "get": {
+        "operationId": "getLatestSiaChanges",
+        "summary": "List the most recent detected changes to UK private-security regulatory guidance",
+        "description": "The most recent detected changes to UK private-security (SIA) regulatory guidance, capped to a small free sample.",
+        "tags": [
+          "compliance",
+          "sia",
+          "change-feed"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "changes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "tier": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    }
+  }
+}

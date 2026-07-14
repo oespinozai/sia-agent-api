@@ -35,6 +35,11 @@ RATE_WINDOW_SECONDS = 3600
 X402_ENABLED = os.environ.get("X402_ENABLED", "0") == "1"
 X402_PAY_TO = os.environ.get("X402_PAY_TO", "")  # Base wallet address (Oscar's CDP)
 X402_PRICE_USDC = os.environ.get("X402_PRICE_USDC", "0.05")
+# Real x402 wire protocol (x402-foundation/x402 x402ResponseSchema): 'accepts[].amount'
+# is an atomic-unit integer string, and 'asset' is the token CONTRACT ADDRESS, not a
+# ticker symbol. USDC on Base has 6 decimals.
+X402_USDC_CONTRACT_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+X402_AMOUNT_ATOMIC = str(int(round(float(X402_PRICE_USDC) * 1_000_000)))
 
 _hits: dict[str, list[float]] = {}
 
@@ -127,21 +132,24 @@ class Handler(BaseHTTPRequestHandler):
             return auth[7:].strip()
         return None
 
-    def _payment_required(self) -> None:
+    def _payment_required(self, description="Full change history requires payment or an API key.") -> None:
         # x402: machine-readable 402 an agent wallet can act on.
+        resource_url = "https://sia.alvento.uk" + self.path
         self._send(
             402,
             {
-                "error": "payment_required",
-                "message": "Full change history requires payment or an API key.",
-                "x402": {
-                    "enabled": X402_ENABLED,
+                "x402Version": 2,
+                "resource": {"url": resource_url, "description": description, "mimeType": "application/json"},
+                "accepts": [{
                     "scheme": "exact",
-                    "network": "base",
-                    "asset": "USDC",
-                    "amount": X402_PRICE_USDC,
-                    "pay_to": X402_PAY_TO or None,
-                },
+                    "network": "eip155:8453",
+                    "amount": X402_AMOUNT_ATOMIC,
+                    "asset": X402_USDC_CONTRACT_BASE,
+                    "payTo": X402_PAY_TO or None,
+                    "maxTimeoutSeconds": 60,
+                    "extra": {"name": "USD Coin", "version": "2"},
+                }] if X402_ENABLED and X402_PAY_TO else [],
+                "message": description,
                 "docs": "/",
             },
             extra_headers={"WWW-Authenticate": "Bearer"},
@@ -223,6 +231,19 @@ class Handler(BaseHTTPRequestHandler):
                     self._send(404, {"error": "not_found", "path": route})
                 return
 
+            if route == "/openapi.json":
+                path = ROOT / "openapi.json"
+                if path.exists():
+                    body = path.read_bytes()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
+                else:
+                    self._send(404, {"error": "not_found", "path": route})
+                return
+
             if route == "/v1/sources":
                 if not rate_ok(ip):
                     self._send(429, {"error": "rate_limited", "retry_after_seconds": RATE_WINDOW_SECONDS})
@@ -253,6 +274,37 @@ class Handler(BaseHTTPRequestHandler):
             self._send(404, {"error": "not_found", "path": route})
         finally:
             conn.close()
+
+    def do_HEAD(self) -> None:  # noqa: N802
+        # Send status + headers normally, then swallow the body. Headers
+        # themselves are written via self.wfile.write() by end_headers(), so
+        # we can only start suppressing writes once that call returns.
+        original_write = self.wfile.write
+        original_end_headers = self.end_headers
+        state = {"headers_sent": False}
+
+        def patched_end_headers():
+            original_end_headers()
+            state["headers_sent"] = True
+
+        def patched_write(data):
+            if state["headers_sent"]:
+                return len(data)
+            return original_write(data)
+
+        self.end_headers = patched_end_headers
+        self.wfile.write = patched_write
+        try:
+            self.do_GET()
+        finally:
+            self.wfile.write = original_write
+            self.end_headers = original_end_headers
+
+    def do_OPTIONS(self) -> None:  # noqa: N802
+        self.send_response(204)
+        self.send_header("Allow", "GET, HEAD, OPTIONS")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
 
     def log_message(self, *_args) -> None:  # quiet default logging
         pass
