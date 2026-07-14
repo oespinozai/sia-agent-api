@@ -171,6 +171,45 @@ class Handler(BaseHTTPRequestHandler):
                 )
                 return
 
+            if route == "/.well-known/mcp/server-card.json":
+                self._send(
+                    200,
+                    {
+                        "serverInfo": {"name": "sia-agent-api", "version": "1.0.0"},
+                        "authentication": {"required": True, "schemes": ["oauth2"]},
+                        "tools": [
+                            {
+                                "name": "list_sources",
+                                "description": "List the UK GOV.UK / SIA sources monitored for private-security compliance changes.",
+                                "inputSchema": {"type": "object", "properties": {}},
+                            },
+                            {
+                                "name": "recent_changes",
+                                "description": "Return the most recent detected changes to UK private-security (SIA) regulatory guidance.",
+                                "inputSchema": {
+                                    "type": "object",
+                                    "properties": {"limit": {"type": "integer", "default": 10}},
+                                },
+                            },
+                            {
+                                "name": "changes_since",
+                                "description": "Return SIA regulatory changes detected on or after an ISO-8601 date.",
+                                "inputSchema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "iso_date": {"type": "string"},
+                                        "limit": {"type": "integer", "default": 50},
+                                    },
+                                    "required": ["iso_date"],
+                                },
+                            },
+                        ],
+                        "resources": [],
+                        "prompts": [],
+                    },
+                )
+                return
+
             if route == "/llms.txt":
                 path = ROOT / "llms.txt"
                 if path.exists():
