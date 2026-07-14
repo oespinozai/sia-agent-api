@@ -19,6 +19,7 @@ Zero third-party dependencies: stdlib http.server + sqlite3 only.
 """
 from __future__ import annotations
 
+import base64
 import json
 import os
 import sqlite3
@@ -40,6 +41,11 @@ X402_PRICE_USDC = os.environ.get("X402_PRICE_USDC", "0.05")
 # ticker symbol. USDC on Base has 6 decimals.
 X402_USDC_CONTRACT_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
 X402_AMOUNT_ATOMIC = str(int(round(float(X402_PRICE_USDC) * 1_000_000)))
+# Bazaar-style input schema so x402scan can index /v1/changes for payable discovery.
+DEFAULT_BAZAAR_INFO = {
+    "input": {"type": "http", "method": "GET", "queryParams": {"since": "ISO-8601 date (optional)", "limit": "max rows (optional)"}},
+    "output": {"type": "json"},
+}
 
 _hits: dict[str, list[float]] = {}
 
@@ -132,28 +138,28 @@ class Handler(BaseHTTPRequestHandler):
             return auth[7:].strip()
         return None
 
-    def _payment_required(self, description="Full change history requires payment or an API key.") -> None:
+    def _payment_required(self, description="Full change history requires payment or an API key.", bazaar_info=None) -> None:
         # x402: machine-readable 402 an agent wallet can act on.
         resource_url = "https://sia.alvento.uk" + self.path
-        self._send(
-            402,
-            {
-                "x402Version": 2,
-                "resource": {"url": resource_url, "description": description, "mimeType": "application/json"},
-                "accepts": [{
-                    "scheme": "exact",
-                    "network": "eip155:8453",
-                    "amount": X402_AMOUNT_ATOMIC,
-                    "asset": X402_USDC_CONTRACT_BASE,
-                    "payTo": X402_PAY_TO or None,
-                    "maxTimeoutSeconds": 60,
-                    "extra": {"name": "USD Coin", "version": "2"},
-                }] if X402_ENABLED and X402_PAY_TO else [],
-                "message": description,
-                "docs": "/",
-            },
-            extra_headers={"WWW-Authenticate": "Bearer"},
-        )
+        payload = {
+            "x402Version": 2,
+            "resource": {"url": resource_url, "description": description, "mimeType": "application/json"},
+            "accepts": [{
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "amount": X402_AMOUNT_ATOMIC,
+                "asset": X402_USDC_CONTRACT_BASE,
+                "payTo": X402_PAY_TO or None,
+                "maxTimeoutSeconds": 60,
+                "extra": {"name": "USD Coin", "version": "2"},
+            }] if X402_ENABLED and X402_PAY_TO else [],
+            "extensions": {"bazaar": {"info": bazaar_info or DEFAULT_BAZAAR_INFO}},
+        }
+        header_b64 = base64.b64encode(json.dumps(payload).encode()).decode()
+        body = dict(payload)
+        body["message"] = description
+        body["docs"] = "/"
+        self._send(402, body, extra_headers={"WWW-Authenticate": "Bearer", "PAYMENT-REQUIRED": header_b64})
 
     def do_GET(self) -> None:  # noqa: N802
         parsed = urlparse(self.path)
