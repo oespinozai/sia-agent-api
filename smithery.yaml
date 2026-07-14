@@ -1,0 +1,9 @@
+runtime: typescript
+buildConfig:
+  dockerfile: true
+startCommand:
+  type: stdio
+  configSchema: {}
+  command: python3
+  args:
+    - mcp_server.py

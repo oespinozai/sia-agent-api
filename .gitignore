@@ -1,0 +1,7 @@
+.venv-mcp/
+__pycache__/
+*.pyc
+state/*.db
+state/*.sqlite*
+.DS_Store
+.env

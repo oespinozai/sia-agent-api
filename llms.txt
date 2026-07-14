@@ -1,0 +1,19 @@
+# SIA Agent API
+
+> A machine-payable API and MCP server delivering UK private-security (SIA)
+> regulatory change intelligence to autonomous agents. It reports when official
+> GOV.UK guidance on SIA licensing, renewals, and training changes.
+
+## What it is
+- Change-detection feed over public GOV.UK / SIA guidance pages (OGL v3, Crown copyright).
+- Our own derived analysis, not a copy of the SIA register of licence holders.
+- Built for AI agents doing private-security compliance, onboarding, or vetting workflows.
+
+## Access
+- HTTP JSON API and an MCP server (tools: list_sources, recent_changes, changes_since).
+- Free tier: source list and latest changes (rate-limited).
+- Paid tier: full change history via API key or x402 machine payment (USDC on Base).
+
+## Not offered
+- Individual licence-holder lookups. The SIA register is personal data and is
+  designed to be checked one record at a time on GOV.UK; we do not resell it.

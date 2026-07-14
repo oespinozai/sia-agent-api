@@ -1,0 +1,3 @@
+# HTTP API (api_server.py) uses only the Python standard library.
+# The MCP server (mcp_server.py) needs the official MCP SDK:
+mcp[cli]>=1.2.0

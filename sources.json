@@ -1,0 +1,44 @@
+[
+  {
+    "slug": "renew-sia-licence",
+    "name": "Renew your SIA licence",
+    "url": "https://www.gov.uk/guidance/renew-your-sia-licence",
+    "tags": ["sia", "renewal", "private-security"],
+    "buyer_relevance": ["ops", "training", "compliance"]
+  },
+  {
+    "slug": "apply-sia-licence",
+    "name": "Apply for an SIA licence",
+    "url": "https://www.gov.uk/guidance/apply-for-an-sia-licence",
+    "tags": ["sia", "application", "private-security"],
+    "buyer_relevance": ["recruitment", "ops", "compliance"]
+  },
+  {
+    "slug": "check-training-sia",
+    "name": "Check what training you need to get an SIA licence",
+    "url": "https://www.gov.uk/guidance/check-what-training-you-need-to-get-an-sia-licence",
+    "tags": ["sia", "training", "private-security"],
+    "buyer_relevance": ["training", "compliance"]
+  },
+  {
+    "slug": "training-changes-sia",
+    "name": "Changes to the training you need for an SIA licence",
+    "url": "https://www.gov.uk/government/news/changes-to-the-training-you-need-for-an-sia-licence",
+    "tags": ["sia", "training", "change-notice", "private-security"],
+    "buyer_relevance": ["training", "ops", "compliance"]
+  },
+  {
+    "slug": "check-staff-licence",
+    "name": "Check security staff have a licence to work",
+    "url": "https://www.gov.uk/check-a-private-security-licence",
+    "tags": ["sia", "licence-check", "private-security"],
+    "buyer_relevance": ["ops", "hr", "audit"]
+  },
+  {
+    "slug": "close-protection-refresher",
+    "name": "SIA announces new refresher training for close protection operatives",
+    "url": "https://www.gov.uk/government/news/sia-announces-new-refresher-training-for-close-protection-operatives",
+    "tags": ["sia", "training", "close-protection", "private-security"],
+    "buyer_relevance": ["training", "close-protection", "compliance"]
+  }
+]
